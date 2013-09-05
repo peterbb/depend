@@ -16,20 +16,29 @@ lexer = T.makeTokenParser $ L.emptyDef
     , L.opStart = oneOf ":.\\="
     , L.opLetter = oneOf "=>"
     , L.reservedOpNames = [":", ":=", ".", "\\", "=>"]
-    , L.reservedNames = [ "Define", "type", "kind", "Pi"]
+    , L.reservedNames = [ "Axiom", "Define", "type", "kind", "Pi"]
     }
 
 --- Parser
 parseProgram :: Parser Program
 parseProgram = do
     T.whiteSpace lexer
-    defs <- (many parseDefinition)
+    defs <- (many parseToplevel)
     eof
     return defs
 
-parseDefinition :: Parser Definition
+parseToplevel = parseDefinition <|> parseAxiom
+
+parseAxiom = do
+    T.reserved lexer "Axiom"
+    name <- T.identifier lexer
+    T.reservedOp lexer ":"
+    typ <- parseExpr
+    T.reservedOp lexer "."
+    return $ Axiom { axName = name, axType = typ }
+
 parseDefinition = do
-    T.symbol lexer "Define"
+    T.reserved lexer "Define"
     name <- T.identifier lexer
     params <- many parseNamedParam
     T.reservedOp lexer ":"
@@ -37,7 +46,11 @@ parseDefinition = do
     T.reservedOp lexer ":="
     body <- parseExpr
     T.reservedOp lexer "."
-    return (name, foldr (uncurry Lambda) typ params, body)
+    return $ Definition 
+        { defName = name
+        , defType = foldr (uncurry Lambda) typ params
+        , defBody = body
+        }
 
 parseExpr = parseConst <|> parseName <|> parseParExpr <|> parseLambda <|> parseApp
 parseConst = parseKind <|> parseType
