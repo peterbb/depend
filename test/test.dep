@@ -1,0 +1,4 @@
+
+Define x : nat := foo.
+
+Define y : nat := bar.

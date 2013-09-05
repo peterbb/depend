@@ -1,0 +1,33 @@
+\documentclass{article}
+
+\usepackage{amsmath}
+
+\newcommand{\nt}[1]{\;\textsc{#1}\;}
+\newcommand{\tm}[1]{\;\texttt{#1}\;}
+
+\begin{document}
+Depend is intended to be a minimal language based on
+$\lambda{}P2$, as described in Barendregt's lambda cube.
+
+\section{Concrete syntax}
+\begin{align*}
+    \nt{Program} &::= \nt{Definition} *  \\
+    \nt{Definition} &::= \tm{Define} \nt{Name}
+                         \nt{NamedParam}* \tm{:}
+                         \nt{Type} \tm{:=} \\
+                    &\phantom{::=} \nt{Expression} \tm{.} \\
+    \nt{NamedParam} &::= \tm{(} \nt{Name} \tm{:} \nt{Type} \tm{)} \\
+    \nt{Type} &::= \nt{Expression} \\
+    \nt{Expression} &::= \nt{Name} \mid \nt{Const} \mid \nt{Lambda} \mid \nt{FuncType} \mid\\
+                    &\phantom{::=} \tm{(} \nt{Expression} \tm{)} \\
+    \nt{Const} &::= \tm{type} \mid \tm{kind} \\
+    \nt{Lambda} &::= \tm{\textbackslash} \nt{NamedParam}* \tm{=>} \nt{Expression} \\
+    \nt{FuncType} &::= \tm{Pi} \nt{NamedParam}+ \tm{.} \nt{Type}
+\end{align*}
+
+Where \nt{Name} is any \textsc{Ascii}-string, starting on a letter.
+
+
+\end{document}
+
+
