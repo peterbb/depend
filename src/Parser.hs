@@ -51,8 +51,8 @@ parseDefinition = do
     T.reservedOp lexer "."
     return $ Definition 
         { defName = name
-        , defType = foldr (uncurry Lambda) typ params
-        , defBody = body
+        , defType = foldr (uncurry Pi) typ params
+        , defBody = foldr (uncurry Lambda) body params
         }
 
 parseExpr :: Parser ParseTree
