@@ -11,7 +11,9 @@ $\lambda{}P2$, as described in Barendregt's lambda cube.
 
 \section{Concrete syntax}
 \begin{align*}
-    \nt{Program} &::= \nt{Definition} *  \\
+    \nt{Program} &::= \nt{Toplevel} *  \\
+    \nt{Toplevel} &::= \nt{Axiom} \mid \nt{Definition} \\
+    \nt{Axiom} &::= \tm{Axiom} \nt{Name} \tm{:} \nt{Type} \tm{.} \\
     \nt{Definition} &::= \tm{Define} \nt{Name}
                          \nt{NamedParam}* \tm{:}
                          \nt{Type} \tm{:=} \\
