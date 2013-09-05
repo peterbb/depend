@@ -13,9 +13,9 @@ lexer = T.makeTokenParser $ L.emptyDef
     { L.commentStart = "(*"
     , L.commentEnd = "*)"
     , L.commentLine = "%"
-    , L.opStart = oneOf ":.\\="
+    , L.opStart = oneOf ":.\\=,"
     , L.opLetter = oneOf "=>"
-    , L.reservedOpNames = [":", ":=", ".", "\\", "=>"]
+    , L.reservedOpNames = [":", ":=", ".", "\\", "=>", ","]
     , L.reservedNames = [ "Axiom", "Define", "type", "kind", "Pi"]
     }
 
@@ -81,7 +81,7 @@ parseLambda = do
 parseFuncType = do
     T.reserved lexer "Pi"
     params <- many1 parseNamedParam
-    T.reservedOp lexer "."
+    T.reservedOp lexer ","
     typ <- parseExpr
     return $ foldr (uncurry Pi) typ params
 
