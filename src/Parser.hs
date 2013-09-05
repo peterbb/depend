@@ -37,9 +37,7 @@ parseDefinition = do
     T.reservedOp lexer ":="
     body <- parseExpr
     T.reservedOp lexer "."
-    case params of
-        [] -> return (name, typ, body)
-        _ -> return (name, (Pi params typ), body)
+    return (name, foldr (uncurry Lambda) typ params, body)
 
 parseExpr = parseConst <|> parseName <|> parseParExpr <|> parseLambda <|> parseApp
 parseConst = parseKind <|> parseType
@@ -65,14 +63,14 @@ parseLambda = do
     params <- many parseNamedParam
     T.reservedOp lexer "=>"
     body <- parseExpr
-    return (Lambda params body)
+    return $ foldr (uncurry Lambda) body params
 
 parseFuncType = do
     T.reserved lexer "Pi"
     params <- many1 parseNamedParam
     T.reservedOp lexer "."
     typ <- parseExpr
-    return (Pi params typ)
+    return $ foldr (uncurry Pi) typ params
 
 parseNamedParam =
     T.parens lexer parseNamedParam'
