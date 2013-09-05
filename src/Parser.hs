@@ -1,6 +1,6 @@
 module Parser (parse) where
 
-import System.IO
+import Debug.Trace
 import ParseTree
 import Text.ParserCombinators.Parsec hiding (parse)
 import qualified Text.ParserCombinators.Parsec as P
@@ -13,8 +13,8 @@ lexer = T.makeTokenParser $ L.emptyDef
     { L.commentStart = "(*"
     , L.commentEnd = "*)"
     , L.commentLine = "%"
-    , L.opStart = oneOf ":.\\=,"
-    , L.opLetter = oneOf "=>"
+    , L.opStart = oneOf ":.\\=,>"
+    , L.opLetter = oneOf ":.\\=,>"
     , L.reservedOpNames = [":", ":=", ".", "\\", "=>", ","]
     , L.reservedNames = [ "Axiom", "Define", "type", "kind", "Pi"]
     }
@@ -27,8 +27,10 @@ parseProgram = do
     eof
     return defs
 
+parseToplevel :: Parser TopLevel
 parseToplevel = parseDefinition <|> parseAxiom
 
+parseAxiom :: Parser TopLevel
 parseAxiom = do
     T.reserved lexer "Axiom"
     name <- T.identifier lexer
@@ -37,6 +39,7 @@ parseAxiom = do
     T.reservedOp lexer "."
     return $ Axiom { axName = name, axType = typ }
 
+parseDefinition :: Parser TopLevel
 parseDefinition = do
     T.reserved lexer "Define"
     name <- T.identifier lexer
@@ -52,7 +55,18 @@ parseDefinition = do
         , defBody = body
         }
 
-parseExpr = parseConst <|> parseName <|> parseParExpr <|> parseLambda <|> parseApp
+parseExpr :: Parser ParseTree
+parseExpr = try complexExpr <|> simpleExpr
+
+simpleExpr = parseConst <|> parseName <|> parseParExpr <|> 
+        parseLambda <|> parseFuncType <?> "expression"
+
+complexExpr = do
+    expr1 <- simpleExpr
+    expr2 <- parseExpr
+    return $ App expr1 expr2
+
+
 parseConst = parseKind <|> parseType
 
 parseKind = do 
@@ -68,7 +82,13 @@ parseName = do
     return (Name name)
 
 parseParExpr = do
-    expr <- T.parens lexer parseExpr
+    T.whiteSpace lexer
+    char '('
+    T.whiteSpace lexer
+    expr <- parseExpr
+    T.whiteSpace lexer
+    char ')'
+    T.whiteSpace lexer
     return expr
 
 parseLambda = do
@@ -85,7 +105,7 @@ parseFuncType = do
     typ <- parseExpr
     return $ foldr (uncurry Pi) typ params
 
-parseNamedParam =
+parseNamedParam = do
     T.parens lexer parseNamedParam'
 
 parseNamedParam' = do
@@ -93,11 +113,6 @@ parseNamedParam' = do
     T.reservedOp lexer ":"
     typ <- parseExpr
     return (name, typ)
-
-parseApp = do
-    expr1 <- parseExpr
-    expr2 <- parseExpr
-    return $ App expr1 expr2
 
 --- Test code.
 
