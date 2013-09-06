@@ -114,20 +114,4 @@ parseNamedParam' = do
     typ <- parseExpr
     return (name, typ)
 
---- Test code.
-
-{-
-
-doParse input = case parse parseProgram "(undefined)" input of
-    Left err -> "Error:" ++ (show err)
-    Right v -> (show v)
-
-main = do 
-    content <- getContents 
-    putStrLn "Input: ===================="
-    putStr content
-    putStrLn "========================END"
-    putStrLn $ doParse content 
-    -}
-
 parse = P.parse parseProgram 
