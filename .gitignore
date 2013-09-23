@@ -3,3 +3,5 @@
 *.hi
 *.aux
 *.log
+dist
+.*.swp
