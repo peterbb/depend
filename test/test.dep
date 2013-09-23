@@ -1,4 +1,9 @@
 
-Define x : nat := foo.
 
-Define y : nat := bar.
+Define total (A : type) (P : Pi (x:A)(y:A), type) : type :=
+    Pi (x:A), (P x) x.
+
+
+
+
+
