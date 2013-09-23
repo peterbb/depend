@@ -7,6 +7,10 @@ import qualified Text.ParserCombinators.Parsec as P
 import qualified Text.ParserCombinators.Parsec.Language as L
 import qualified Text.Parsec.Token as T
 
+-- Only exported program.
+-- parse source-code file-info
+parse :: String -> String -> Either ParseError Program
+parse = P.parse parseProgram 
 
 --- Lexer
 lexer = T.makeTokenParser $ L.emptyDef 
@@ -56,22 +60,12 @@ parseDefinition = do
         }
 
 parseExpr :: Parser ParseTree
-parseExpr = try complexExpr <|> simpleExpr
+parseExpr = do
+    exprs <- many1 simpleExpr
+    return $ foldl1 App exprs
 
-simpleExpr = parseConst <|> parseName <|> parseParExpr <|> 
-        parseLambda <|> parseFuncType <?> "expression"
-
-complexExpr = do
-    expr1 <- simpleExpr
-    expr2 <- parseExpr
-    return $ App expr1 expr2
-
-
-parseConst = parseKind <|> parseType
-
-parseKind = do 
-    T.reserved lexer "kind"
-    return Kind
+simpleExpr = parseType <|> parseName <|> parseParExpr <|> 
+             parseLambda <|> parseFuncType <?> "expression"
 
 parseType = do
     T.reserved lexer "type"
@@ -113,5 +107,3 @@ parseNamedParam' = do
     T.reservedOp lexer ":"
     typ <- parseExpr
     return (name, typ)
-
-parse = P.parse parseProgram 

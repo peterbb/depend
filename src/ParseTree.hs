@@ -10,7 +10,7 @@ data TopLevel = Definition { defName :: String
               | Axiom { axName :: String
                       , axType :: ParseTree
                       }
-    deriving (Show)
+    deriving (Show, Eq)
 
 data ParseTree = Name String
                | Kind
@@ -18,6 +18,6 @@ data ParseTree = Name String
                | App ParseTree ParseTree
                | Lambda String ParseTree ParseTree
                | Pi String ParseTree ParseTree
-               deriving (Show)
+               deriving (Show, Eq)
 
     
