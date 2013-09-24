@@ -72,9 +72,27 @@ Test-Suite test-ast
     main-is: test-ast.hs
     build-depends:  base ==4.5.*, mtl ==2.1.*
 
-Test-Suite test-typecheck
+Test-Suite test-substitute
     type: exitcode-stdio-1.0
     hs-source-dirs: src test
-    main-is: test-typecheck.hs
+    main-is: test-substitute.hs
+    build-depends:  base ==4.5.*, mtl ==2.1.*
+
+Test-Suite test-nf
+    type: exitcode-stdio-1.0
+    hs-source-dirs: src test
+    main-is: test-nf.hs
+    build-depends:  base ==4.5.*, mtl ==2.1.*
+
+Test-Suite test-typecheck1
+    type: exitcode-stdio-1.0
+    hs-source-dirs: src test
+    main-is: test-typecheck1.hs
+    build-depends:  base ==4.5.*, mtl ==2.1.*
+
+Test-Suite test-typecheck2
+    type: exitcode-stdio-1.0
+    hs-source-dirs: src test
+    main-is: test-typecheck2.hs
     build-depends:  base ==4.5.*, mtl ==2.1.*
 
