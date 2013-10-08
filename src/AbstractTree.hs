@@ -1,10 +1,7 @@
-{-# OPTIONS_GHC -XTemplateHaskell #-}
-
-module AbstractTree (translate, Program, 
-        TopLevel(..), Expr(..), topType, topBody) 
-    where
+module AbstractTree (translate, Program, TopLevel(..), Expr(..)) where
 
 import Data.List
+import Data.Traversable
 import Control.Monad.Error
 import Control.Monad.Identity
 
@@ -12,23 +9,11 @@ import qualified ParseTree as P
 
 type Program = [ TopLevel ]
 
-data TopLevel = Definition 
-                    { defName :: String
-                    , defType :: Expr
-                    , defBody :: Expr
-                    }
-              | Axiom 
-                    { axName :: String
-                    , axType :: Expr
-                    }
+data TopLevel = TopLevel { topName :: String
+                         , topType :: Expr
+                         , topDef  :: Maybe Expr
+                         }
     deriving (Show, Eq)
-
-topName (Definition {defName=name}) = name
-topName (Axiom {axName=name}) = name
-topType (Definition {defType=typ}) = typ
-topType (Axiom {axType=typ}) = typ
-topBody (Definition {defBody=body}) = Just body
-topBody (Axiom {}) = Nothing
 
 data Expr = 
       Variable String Int
@@ -60,25 +45,19 @@ translate_prog gamma (top:prog) = do
     ast_top <- translate_top gamma top
     ast_prog <- translate_prog (topName ast_top:gamma) prog
     return $ ast_top:ast_prog 
-          
-translate_top gamma (P.Definition {P.defName=name, P.defType=typ, P.defBody=body}) = do 
-    ast_typ <- translate_expr gamma typ
-    ast_body <- translate_expr gamma body
-    return $ Definition 
-        { defName = name
-        , defType = ast_typ
-        , defBody = ast_body
-        }
 
-translate_top gamma (P.Axiom {P.axName=name, P.axType=typ}) = do
-    ast_type <- translate_expr gamma typ
-    return $ Axiom {axName=name, axType=ast_type}
+translate_top :: [String] -> P.TopLevel -> TranslateResult TopLevel
+translate_top gamma (P.TopLevel name typ m_body) = do
+    ast_typ <- translate_expr gamma typ
+    ast_body <- traverse (translate_expr gamma) m_body
+    return $ TopLevel name ast_typ ast_body
 
 translate_expr :: [String] -> P.ParseTree -> TranslateResult Expr
 translate_expr gamma (P.Name name) = 
     case elemIndex name gamma of
         Just i -> return $ Variable name i
-        Nothing -> throwError (TranslateError $ "Variable " ++ name ++ " not bound in " ++ (show gamma))
+        Nothing -> 
+            throwError $ TranslateError $ "Variable " ++ name ++ " not bound in " ++ show gamma
 translate_expr _ P.Kind = return Kind
 translate_expr _ P.Type = return Type
 translate_expr gamma (P.App expr1 expr2) = do

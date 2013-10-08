@@ -2,6 +2,7 @@
 module TypeCheck (type_check, type_check_expr, substitute, expr_nf)
     where
 
+import Data.Traversable
 import Control.Monad
 import Debug.Trace
 import AbstractTree
@@ -54,19 +55,19 @@ expr_nf defs (Pi x typ1 typ2) =
     Pi x (expr_nf defs typ1) (expr_nf (Nothing:defs) typ2)
 
 -- Apply function to variables (leaves), together with their depth.
-traverse :: (Int -> String -> Int -> Expr) -> Int -> Expr -> Expr
-traverse f n (Variable x i) = f n x i
-traverse f n Kind = Kind
-traverse f n Type = Type
-traverse f n (App e1 e2) = App (traverse f n e1) (traverse f n e2)
-traverse f n (Lambda x typ body) =
-    Lambda x (traverse f n typ) (traverse f (n + 1) body)
-traverse f n (Pi x typ body) = 
-    Pi x (traverse f n typ) (traverse f (n + 1) body)
+e_traverse :: (Int -> String -> Int -> Expr) -> Int -> Expr -> Expr
+e_traverse f n (Variable x i) = f n x i
+e_traverse f n Kind = Kind
+e_traverse f n Type = Type
+e_traverse f n (App e1 e2) = App (e_traverse f n e1) (e_traverse f n e2)
+e_traverse f n (Lambda x typ body) =
+    Lambda x (e_traverse f n typ) (e_traverse f (n + 1) body)
+e_traverse f n (Pi x typ body) = 
+    Pi x (e_traverse f n typ) (e_traverse f (n + 1) body)
 
 -- substitute e e' = substitute e for the first free variable in e'
 substitute :: Expr -> Expr -> Expr
-substitute e = traverse 
+substitute e = e_traverse 
     (\ n x i -> 
         if n == i
         then (inc_free_vars n e)
@@ -74,10 +75,10 @@ substitute e = traverse
     0
 
 inc_free_vars :: Int -> Expr -> Expr
-inc_free_vars inc = traverse (\ n x i -> Variable x (if (n <= i) then (i + inc) else i)) 0
+inc_free_vars inc = e_traverse (\ n x i -> Variable x (if (n <= i) then (i + inc) else i)) 0
 
 dec_free_vars :: Int -> Expr -> Expr
-dec_free_vars dec = traverse (\ n x i -> Variable x (if (n <= i) then (i - dec) else i)) 0
+dec_free_vars dec = e_traverse (\ n x i -> Variable x (if (n <= i) then (i - dec) else i)) 0
 
 inc_free_vars1 :: Expr -> Expr
 inc_free_vars1 = inc_free_vars 1
@@ -101,25 +102,23 @@ type_check_prog :: Env -> Defs -> Program -> Result
 type_check_prog _ _ [] = type_ok
 type_check_prog gamma defs (top:prog) = do
     type_check_top gamma defs top
-    type_check_prog ((expr_nf defs $ topType top):gamma) ((topBody top):defs) prog
+    type_check_prog ((expr_nf defs $ topType top):gamma) ((topDef top):defs) prog
 
 type_check_top :: Env -> Defs -> TopLevel -> Result
-type_check_top gamma defs ax@(Axiom {}) = do
-    sort <- type_check_expr 0 gamma defs (axType ax)
-    assert_Type_or_Kind sort (axType ax) "Type checking axiom"
-
-type_check_top gamma defs def@(Definition {}) = do
-    sort <- type_check_expr 0 gamma defs (defType def)
-    assert_Type_or_Kind sort (defType def) "Type checking definition"
-    derived_type <- type_check_expr 0 gamma defs (defBody def)
-    if eq_beta defs derived_type (defType def)
-       then type_ok
-       else Left $ ("Definition of " ++ (defName def) ++ " should have type " ++
-                (show (expr_nf defs (defType def))) ++ ", infered to be " ++
-                (show derived_type))
+type_check_top gamma defs (TopLevel name typ m_body) = do
+        sort <- type_check_expr 0 gamma defs typ
+        assert_Type_or_Kind sort typ "Type checking definition"
+        case m_body of
+         Nothing -> return ()
+         Just body -> do
+            derived_type <- type_check_expr 0 gamma defs body
+            if eq_beta defs derived_type typ
+                then type_ok
+                else Left $ ("Definition of " ++ name ++ " should have type " ++
+                        (show typ) ++ ", infered to be " ++
+                        (show derived_type))
 
 type_check_expr :: Int -> Env -> Defs -> Expr -> Either String Expr
-
 --type_check_expr ind g defs e 
 --    | trace ("trace: " ++ (replicate (2*ind) ' ') ++ 
 --             (show g) ++ ";" ++ (show defs) ++ " |- " ++ (show e)) False = undefined

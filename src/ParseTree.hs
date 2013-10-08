@@ -3,13 +3,10 @@ module ParseTree (ParseTree(..), Program, TopLevel(..))
 
 type Program = [ TopLevel ]
 
-data TopLevel = Definition { defName :: String
-                           , defType :: ParseTree
-                           , defBody :: ParseTree
-                           }
-              | Axiom { axName :: String
-                      , axType :: ParseTree
-                      }
+data TopLevel = TopLevel { topName :: String
+                         , topType :: ParseTree
+                         , topBody :: Maybe ParseTree
+                          }
     deriving (Show, Eq)
 
 data ParseTree = Name String

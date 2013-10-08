@@ -41,7 +41,7 @@ parseAxiom = do
     T.reservedOp lexer ":"
     typ <- parseExpr
     T.reservedOp lexer "."
-    return $ Axiom { axName = name, axType = typ }
+    return $ TopLevel name typ Nothing
 
 parseDefinition :: Parser TopLevel
 parseDefinition = do
@@ -53,11 +53,9 @@ parseDefinition = do
     T.reservedOp lexer ":="
     body <- parseExpr
     T.reservedOp lexer "."
-    return $ Definition 
-        { defName = name
-        , defType = foldr (uncurry Pi) typ params
-        , defBody = foldr (uncurry Lambda) body params
-        }
+    return $ TopLevel name 
+                (foldr (uncurry Pi) typ params)
+                $ Just (foldr (uncurry Lambda) body params)
 
 parseExpr :: Parser ParseTree
 parseExpr = do

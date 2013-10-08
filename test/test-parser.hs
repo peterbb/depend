@@ -20,46 +20,41 @@ program = unlines [
     
 
 expected_ast = [
-     Axiom {axName="int", axType=Type}
-    ,Definition {defName="bool"
-                ,defType=Pi "A" Type Type
-                ,defBody=Lambda "A" Type (Pi "x" (Name "A") (Pi "y" (Name "A") (Name "A")))
-                }
-    ,Definition {defName="True"
-                ,defType=Pi "A" Type (App (Name "bool") (Name "A"))
-                ,defBody=Lambda "A" Type
+     TopLevel "int" Type Nothing
+    ,TopLevel "bool"
+              (Pi "A" Type Type)
+              (Just $Lambda "A" Type (Pi "x" (Name "A") (Pi "y" (Name "A") (Name "A"))))
+    ,TopLevel "True"
+                (Pi "A" Type (App (Name "bool") (Name "A")))
+                (Just $ Lambda "A" Type
                             (Lambda "x" (Name "A")
                                 (Lambda "y" (Name "A")
-                                    (Name "x")))
-                }
-    ,Definition {defName="False"
-                ,defType=Pi "A" Type (App (Name "bool") (Name "A"))
-                ,defBody=Lambda "A" Type
+                                    (Name "x"))))
+    ,TopLevel "False"
+                (Pi "A" Type (App (Name "bool") (Name "A")))
+                (Just $ Lambda "A" Type
                             (Lambda "x" (Name "A")
                                 (Lambda "y" (Name "A")
-                                    (Name "y")))
-                }
-    ,Definition {defName="And3"
-                ,defType=Pi "A" Type (Pi "a" (App (Name "bool") (Name "A"))
+                                    (Name "y"))))
+    ,TopLevel "And3"
+                (Pi "A" Type (Pi "a" (App (Name "bool") (Name "A"))
                                         (Pi "b" (App (Name "bool") (Name "A"))
                                            (Pi "c" (App (Name "bool") (Name "A"))
-                                              (App (Name "bool") (Name "A")))))
-                ,defBody=Lambda "A" Type
+                                              (App (Name "bool") (Name "A"))))))
+                (Just $ Lambda "A" Type
                             (Lambda "a" (App (Name "bool") (Name "A"))
                                 (Lambda "b" (App (Name "bool") (Name "A"))
                                     (Lambda "c" (App (Name "bool") (Name "A"))
                                          (App (App (Name "a") (App (App (Name "b") 
                                                                         (Name "c")) 
                                                                    (Name "False")))
-                                              (Name "False")))))
-                }
-    ,Definition {defName="test"
-                ,defType=Name "int"
-                ,defBody=App (App (App (App (Name "And3") (Name "int")) 
+                                              (Name "False"))))))
+    ,TopLevel "test"
+                (Name "int")
+                (Just $ App (App (App (App (Name "And3") (Name "int")) 
                                        (App (Name "True") (Name "int")))
                                   (App (Name "False") (Name "int")))
-                             (App (Name "False") (Name "int"))
-                }
+                             (App (Name "False") (Name "int")))
     ]
 
 
